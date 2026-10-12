@@ -15,7 +15,7 @@ sample, temperature, date) rather than by folder and file name. -->
 
 - [x] Ingest NeXus/HDF5 files with metadata validation (bad files are logged and skipped)
 - [x] REST API with search, filters, paging and facets (FastAPI, OpenAPI docs)
-- [ ] Web app: search page and dataset page with a quick-look plot (React + TypeScript)
+- [ ] Web app (React + TypeScript): search page with filters and paging ✓; dataset page with a quick-look plot (to do)
 - [ ] Plain-English search: the language model only proposes a validated filter, and the user confirms it before it runs
 - [ ] Integration: SciCat or qens (see the decision record in `docs/adr`)
 
@@ -54,6 +54,15 @@ uv run nxcat-ingest ../data/generated
 
 # Run the API, then open http://localhost:8000/api/v1/docs
 uv run uvicorn nxcat.api.app:app --reload
+```
+
+Web app (needs Node 22.12 or newer, and the API running on port 8000):
+
+```bash
+cd frontend
+npm install
+npm run dev                      # http://localhost:5173
+npm test                         # Vitest + React Testing Library
 ```
 
 Run `pre-commit install` once, from the repository root.

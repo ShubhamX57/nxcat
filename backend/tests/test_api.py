@@ -99,6 +99,15 @@ def test_health_reports_unreachable_database() -> None:
     assert response.json()["database"] == "unreachable"
 
 
+@pytest.mark.parametrize("path", ["/api/v1/datasets", "/api/v1/datasets/1", "/api/v1/facets"])
+def test_database_outage_is_503_with_a_reason(path: str) -> None:
+    bad = make_engine("postgresql+psycopg://nobody:wrong@localhost:1/none")
+    with TestClient(create_app(engine=bad)) as c:
+        response = c.get(path)
+    assert response.status_code == 503
+    assert "database is unavailable" in response.json()["detail"]
+
+
 def test_openapi_docs_are_served(client: TestClient) -> None:
     schema = client.get("/api/v1/openapi.json").json()
     assert "/api/v1/datasets" in schema["paths"]
