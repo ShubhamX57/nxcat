@@ -1,0 +1,22 @@
+# Local development stack. The API and web app are added later.
+# Credentials here are for local development only.
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: nxcat
+      POSTGRES_PASSWORD: nxcat
+      POSTGRES_DB: nxcat
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nxcat -d nxcat"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  db-data:

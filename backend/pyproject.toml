@@ -7,11 +7,14 @@ license = "MIT"
 dependencies = [
     "h5py>=3.16.0",
     "numpy>=2.5.4",
+    "psycopg[binary]>=3.2",
     "pydantic>=2.14.1",
+    "sqlalchemy>=2.0",
 ]
 
 [project.scripts]
 nxcat-generate = "nxcat.synthetic:main"
+nxcat-ingest = "nxcat.ingest.pipeline:main"
 
 [dependency-groups]
 dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.6", "mypy>=1.11"]
