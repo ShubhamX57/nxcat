@@ -1,4 +1,4 @@
-# Local development stack. The API and web app are added later.
+# Local stack: PostgreSQL and the nxcat API. The web app is added later.
 # Credentials here are for local development only.
 services:
   db:
@@ -18,5 +18,18 @@ services:
       timeout: 5s
       retries: 15
 
+  api:
+    build: ./backend
+    environment:
+      NXCAT_DATABASE_URL: postgresql+psycopg://nxcat:nxcat@db:5432/nxcat
+    ports:
+      - "8000:8000"
+    volumes:
+      - nxcat-files:/data  # NeXus files the API can read (e.g. for previews)
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   db-data:
+  nxcat-files:

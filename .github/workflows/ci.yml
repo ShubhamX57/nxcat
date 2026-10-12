@@ -36,3 +36,26 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run mypy
       - run: uv run pytest --cov --cov-report=term-missing
+
+  docker:
+    # Builds the API image and runs the whole stack the way a user would.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start database and API
+        run: docker compose up -d --build --wait
+      - name: Generate and ingest synthetic data inside the API container
+        run: |
+          docker compose exec -T api nxcat-generate --out /data/generated -n 20 --with-broken
+          docker compose exec -T api nxcat-ingest /data/generated | tee ingest.log
+          grep "added 20, updated 0, unchanged 0, failed 5" ingest.log
+      - name: Check the API answers
+        run: |
+          curl --fail --silent http://localhost:8000/api/v1/health
+          test "$(curl --fail --silent 'http://localhost:8000/api/v1/datasets?size=1' | python3 -c 'import json,sys; print(json.load(sys.stdin)["total"])')" = "20"
+      - name: Show logs if anything failed
+        if: failure()
+        run: docker compose logs
+      - name: Stop
+        if: always()
+        run: docker compose down -v

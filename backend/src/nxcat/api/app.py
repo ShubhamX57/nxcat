@@ -4,12 +4,30 @@ Run locally:  uv run uvicorn nxcat.api.app:app --reload
 Docs:         http://localhost:8000/api/v1/docs
 """
 
+import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from sqlalchemy import Engine
+from sqlalchemy.exc import SQLAlchemyError
 
 from nxcat import __version__
 from nxcat.api.routes import router
-from nxcat.db import make_engine
+from nxcat.db import create_tables, make_engine
+
+log = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Create missing tables at start-up. If the database is down, start anyway:
+    /health then reports it, instead of the API refusing to start."""
+    try:
+        create_tables(app.state.engine)
+    except SQLAlchemyError:
+        log.warning("database not reachable at start-up; tables not created")
+    yield
 
 
 def create_app(engine: Engine | None = None) -> FastAPI:
@@ -21,6 +39,7 @@ def create_app(engine: Engine | None = None) -> FastAPI:
         openapi_url="/api/v1/openapi.json",
         docs_url="/api/v1/docs",
         redoc_url=None,
+        lifespan=lifespan,
     )
     app.state.engine = engine or make_engine()
     app.include_router(router)
