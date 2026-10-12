@@ -5,9 +5,9 @@ from pathlib import Path
 import h5py
 import pytest
 
+from nxcat.instruments import INSTRUMENTS
 from nxcat.models.metadata import DatasetMetadata
 from nxcat.synthetic import (
-    INSTRUMENTS,
     N_POINTS,
     Broken,
     generate,

@@ -17,24 +17,8 @@ from pathlib import Path
 import h5py
 import numpy as np
 
-from nxcat.models.metadata import DatasetMetadata, Technique
-
-# instrument -> (technique, facility). Names are real, the data is not.
-INSTRUMENTS: dict[str, tuple[Technique, str]] = {
-    "LET": (Technique.QENS, "ISIS"),
-    "IRIS": (Technique.QENS, "ISIS"),
-    "OSIRIS": (Technique.QENS, "ISIS"),
-    "MARI": (Technique.INS, "ISIS"),
-    "MAPS": (Technique.INS, "ISIS"),
-    "SANS2D": (Technique.SANS, "ISIS"),
-    "WISH": (Technique.DIFFRACTION, "ISIS"),
-    "POLREF": (Technique.REFLECTOMETRY, "ISIS"),
-    "BIFROST": (Technique.QENS, "ESS"),
-    "LOKI": (Technique.SANS, "ESS"),
-    "DREAM": (Technique.DIFFRACTION, "ESS"),
-    "ESTIA": (Technique.REFLECTOMETRY, "ESS"),
-    "ODIN": (Technique.IMAGING, "ESS"),
-}
+from nxcat.instruments import INSTRUMENTS, TECHNIQUE_DEFINITION
+from nxcat.models.metadata import DatasetMetadata
 
 SAMPLES = (
     "benzene",
@@ -48,16 +32,6 @@ SAMPLES = (
     "CsPbBr3",
     "BMIM-PF6",
 )
-
-# NeXus application definition written for each technique.
-DEFINITIONS: dict[Technique, str] = {
-    Technique.QENS: "NXspe",
-    Technique.INS: "NXspe",
-    Technique.SANS: "NXcanSAS",
-    Technique.DIFFRACTION: "NXmonopd",
-    Technique.REFLECTOMETRY: "NXrefscan",
-    Technique.IMAGING: "NXtomo",
-}
 
 EARLIEST_START = datetime(2023, 1, 1, tzinfo=UTC)
 LATEST_START = datetime(2026, 6, 30, tzinfo=UTC)
@@ -127,7 +101,7 @@ def write_nexus(
 
         if broken is not Broken.MISSING_FIELD:
             entry["title"] = meta.title
-        entry["definition"] = DEFINITIONS[meta.technique]
+        entry["definition"] = TECHNIQUE_DEFINITION[meta.technique]
         entry["entry_identifier"] = meta.run_number
         entry["start_time"] = _iso(meta.start_time)
         if broken is Broken.BAD_VALUE:
