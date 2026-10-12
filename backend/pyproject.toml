@@ -5,11 +5,13 @@ description = "A mini metadata catalogue for neutron data"
 requires-python = ">=3.12"
 license = "MIT"
 dependencies = [
+    "fastapi>=0.115",
     "h5py>=3.16.0",
     "numpy>=2.5.4",
     "psycopg[binary]>=3.2",
     "pydantic>=2.14.1",
     "sqlalchemy>=2.0",
+    "uvicorn[standard]>=0.30",
 ]
 
 [project.scripts]
@@ -17,7 +19,13 @@ nxcat-generate = "nxcat.synthetic:main"
 nxcat-ingest = "nxcat.ingest.pipeline:main"
 
 [dependency-groups]
-dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.6", "mypy>=1.11"]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=5",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "httpx2>=2.13.1",
+]
 
 [build-system]
 requires = ["hatchling"]
