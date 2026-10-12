@@ -218,3 +218,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# nxcat
+.env
+data/generated/
+*.h5
+*.hdf5
+*.nxs
+*.nxspe
+!backend/tests/fixtures/**
