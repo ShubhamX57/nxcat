@@ -7,7 +7,10 @@ from nxcat.models.tables import Base
 
 
 def make_engine(url: str | None = None) -> Engine:
-    return create_engine(url or database_url(), pool_pre_ping=True)
+    # Every connection works in UTC, so all times leave the API in one time zone.
+    return create_engine(
+        url or database_url(), pool_pre_ping=True, connect_args={"options": "-c timezone=utc"}
+    )
 
 
 def create_tables(engine: Engine) -> None:
