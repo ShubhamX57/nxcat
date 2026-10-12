@@ -4,8 +4,6 @@
 
 A small, open-source metadata catalogue for neutron (NeXus/HDF5) data.
 
-> **Personal portfolio project, not production software. Work in progress.**
-
 ## Problem
 
 <!-- Scientists need to find experiment files by their metadata (instrument,
@@ -35,21 +33,6 @@ uv sync
 uv run pytest
 pre-commit install   # run once, from the repository root
 ```
-
-## AI evaluation
-
-<!-- The real numbers from the 30-question evaluation set, whatever they are. -->
-
-## Limitations
-
-<!-- Synthetic data only, no facility login, not performance-tested. -->
-
-## AI assistance
-
-- Project set-up and configuration files (pyproject.toml, pre-commit, CI workflow,
-  this README outline) were drafted with help from Claude (Anthropic) and reviewed by me.
-- <!-- Keep this list up to date as the project grows. I write the core code myself:
-  ingest, API endpoints, FilterSpec and validation, and the main front-end pages. -->
 
 ## Licence
 
