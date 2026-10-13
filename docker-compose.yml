@@ -1,4 +1,5 @@
-# Local stack: PostgreSQL and the nxcat API. The web app is added later.
+# Local stack: PostgreSQL, the nxcat API and the web app.
+# Open http://localhost:8080 for the app (the API docs are also on :8000).
 # Credentials here are for local development only.
 services:
   db:
@@ -28,6 +29,14 @@ services:
       - nxcat-files:/data  # NeXus files the API can read (e.g. for previews)
     depends_on:
       db:
+        condition: service_healthy
+
+  web:
+    build: ./frontend
+    ports:
+      - "8080:8080"
+    depends_on:
+      api:
         condition: service_healthy
 
 volumes:

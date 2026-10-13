@@ -25,7 +25,7 @@ sample, temperature, date) rather than by folder and file name. -->
 
 ## Quick start
 
-Requirements: Docker. One command starts PostgreSQL and the API:
+Requirements: Docker. One command starts PostgreSQL, the API and the web app:
 
 ```bash
 docker compose up -d --build --wait
@@ -35,7 +35,7 @@ docker compose exec api nxcat-generate --out /data/generated -n 200 --with-broke
 docker compose exec api nxcat-ingest /data/generated
 ```
 
-Then open the API docs at <http://localhost:8000/api/v1/docs>.
+Then open the app at <http://localhost:8080>, and the API docs at <http://localhost:8000/api/v1/docs>.
 Stop with `docker compose down` (add `-v` to delete the data too).
 
 ## Development
