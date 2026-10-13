@@ -1,4 +1,4 @@
-import type { Dataset, DatasetPage, Facets, Preview, SearchParams } from './types'
+import type { AskResponse, Dataset, DatasetPage, Facets, Preview, SearchParams } from './types'
 
 const BASE = '/api/v1'
 
@@ -37,10 +37,11 @@ function describeError(body: unknown): string | null {
   return null
 }
 
-async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+async function getJson<T>(path: string, signal?: AbortSignal, init?: RequestInit): Promise<T> {
   const response = await fetch(`${BASE}${path}`, {
+    ...init,
     signal,
-    headers: { Accept: 'application/json' },
+    headers: { Accept: 'application/json', ...init?.headers },
   })
   if (!response.ok) {
     const body: unknown = await response.json().catch(() => null)
@@ -64,4 +65,12 @@ export function getDataset(id: number, signal?: AbortSignal): Promise<Dataset> {
 
 export function getPreview(id: number, signal?: AbortSignal): Promise<Preview> {
   return getJson<Preview>(`/datasets/${id}/preview`, signal)
+}
+
+export function askQuestion(question: string, signal?: AbortSignal): Promise<AskResponse> {
+  return getJson<AskResponse>('/search/ask', signal, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question }),
+  })
 }

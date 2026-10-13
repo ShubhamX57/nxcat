@@ -66,3 +66,16 @@ export interface SearchParams {
   page?: number
   size?: number
 }
+
+/** Filters as the API returns them (the same fields as SearchParams, minus paging). */
+export type Filters = Omit<SearchParams, 'page' | 'size'>
+
+/** Reply of POST /api/v1/search/ask. It proposes a filter; it never contains results. */
+export type AskResponse =
+  | { status: 'proposed'; filter: Filters; description: string[] }
+  | {
+      status: 'rejected'
+      kind: 'out_of_scope' | 'unclear' | 'invalid'
+      reason: string
+      description: string[]
+    }

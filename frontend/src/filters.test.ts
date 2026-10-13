@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { EMPTY_FORM, formFromUrl, formToUrl, pageFromUrl, toSearchParams } from './filters'
+import {
+  EMPTY_FORM,
+  formFromFilters,
+  formFromUrl,
+  formToUrl,
+  pageFromUrl,
+  toSearchParams,
+} from './filters'
 
 describe('toSearchParams', () => {
   it('turns an empty form into no filters', () => {
@@ -47,5 +54,34 @@ describe('filters in the address', () => {
     ['page=abc', 1],
   ])('reads "%s" as page %s', (query, page) => {
     expect(pageFromUrl(new URLSearchParams(query))).toBe(page)
+  })
+})
+
+describe('formFromFilters', () => {
+  it('turns an API filter into the form, with an inclusive "to" date', () => {
+    expect(
+      formFromFilters({
+        q: 'water',
+        technique: 'QENS',
+        temp_max: 100,
+        start_after: '2025-03-01T00:00:00Z',
+        start_before: '2025-04-01T00:00:00Z',
+      }),
+    ).toEqual({
+      ...EMPTY_FORM,
+      q: 'water',
+      technique: 'QENS',
+      tempMax: '100',
+      dateFrom: '2025-03-01',
+      dateTo: '2025-03-31',
+    })
+  })
+
+  it('round-trips through toSearchParams', () => {
+    const filters = { instrument: 'LET', start_after: '2025-01-01T00:00:00Z', start_before: '2026-01-01T00:00:00Z' }
+    const params = toSearchParams(formFromFilters(filters))
+    expect(params.instrument).toBe('LET')
+    expect(params.start_after).toBe(filters.start_after)
+    expect(params.start_before).toBe(filters.start_before)
   })
 })

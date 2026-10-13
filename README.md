@@ -16,7 +16,7 @@ sample, temperature, date) rather than by folder and file name. -->
 - [x] Ingest NeXus/HDF5 files with metadata validation (bad files are logged and skipped)
 - [x] REST API with search, filters, paging and facets (FastAPI, OpenAPI docs)
 - [x] Web app (React + TypeScript): search with filters and paging (filters kept in the address, so searches can be shared); dataset page with full metadata and a quick-look plot
-- [ ] Plain-English search: the language model only proposes a validated filter, and the user confirms it before it runs
+- [x] Plain-English search: the language model only proposes a validated filter, and the user confirms it before it runs (see below)
 - [ ] Integration: SciCat or qens (see the decision record in `docs/adr`)
 
 ## Architecture
@@ -37,6 +37,39 @@ docker compose exec api nxcat-ingest /data/generated
 
 Then open the app at <http://localhost:8080>, and the API docs at <http://localhost:8000/api/v1/docs>.
 Stop with `docker compose down` (add `-v` to delete the data too).
+
+## Plain-English search
+
+Type a question such as *"LET runs on benzene above 250 K from 2025"*. A language model
+proposes a filter, nxcat validates it and shows it in plain words, and the search runs
+only when you press **Run this search**. The model never answers questions about the
+data and never runs anything itself
+([design decision](docs/adr/0001-llm-only-proposes-a-validated-filter.md)).
+
+It is optional and off by default. To use a free local model with [Ollama](https://ollama.com):
+
+```bash
+ollama pull qwen2.5:7b-instruct
+sed -i '' "s|^NXCAT_LLM_MODEL=.*|NXCAT_LLM_MODEL=ollama/qwen2.5:7b-instruct|" .env
+docker compose up -d --wait
+```
+
+Any model that [LiteLLM](https://docs.litellm.ai) supports can be used instead.
+
+## AI evaluation
+
+Plain-English search is measured on 30 fixed questions (`backend/tests/ai_eval/questions.json`):
+20 normal, 5 ambiguous and 5 out of scope. To run it against a model:
+
+```bash
+cd backend
+uv run nxcat-eval --model ollama/qwen2.5:7b-instruct --api-base http://localhost:11434
+```
+
+This writes `docs/ai-evaluation.md` and caches every reply, so the run can be repeated
+with `--replay-only`.
+
+**Results** (qwen2.5:7b-instruct via Ollama, run 13 October 2026): 16/20 exact filters, 5/5 out-of-scope questions rejected, 0 invalid filters executed; 3/5 ambiguous questions led to a request to clarify. Full table: [docs/ai-evaluation.md](docs/ai-evaluation.md).
 
 ## Write actions (admin login)
 
@@ -88,6 +121,14 @@ npm test                         # Vitest + React Testing Library
 ```
 
 Run `pre-commit install` once, from the repository root.
+
+## AI assistance
+
+Most of the code in this repository was written by Claude (Anthropic's AI assistant)
+in guided sessions, from a plan I wrote. I chose the scope and the order of work, ran
+and tested every change on my own computer, and merged each pull request only after CI
+passed. Design decisions were discussed with the assistant; the reasons are recorded in
+`docs/adr/`. Any part that I later rewrite myself will be listed here.
 
 ## Licence
 

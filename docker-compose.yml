@@ -29,6 +29,10 @@ services:
     env_file:
       - path: .env
         required: false
+    # Lets the API reach a model server on your computer (e.g. Ollama) as
+    # host.docker.internal. Docker Desktop provides this name already; Linux needs it.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "8000:8000"
     volumes:

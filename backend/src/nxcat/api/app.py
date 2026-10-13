@@ -13,8 +13,9 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import Engine
 from sqlalchemy.exc import OperationalError, SQLAlchemyError
 
-from nxcat import __version__
-from nxcat.api import admin, auth
+from nxcat import __version__, config
+from nxcat.ai.proposer import Complete, litellm_completer
+from nxcat.api import admin, ask, auth
 from nxcat.api.routes import router
 from nxcat.db import create_tables, make_engine
 
@@ -32,8 +33,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
 
 
-def create_app(engine: Engine | None = None) -> FastAPI:
-    """Build the app. Tests pass their own engine; normal runs use NXCAT_DATABASE_URL."""
+def _default_completer() -> Complete | None:
+    model = config.llm_model()
+    if model is None:
+        return None
+    return litellm_completer(model, config.llm_api_base(), config.llm_timeout())
+
+
+def create_app(engine: Engine | None = None, complete: Complete | None = None) -> FastAPI:
+    """Build the app. Tests pass their own engine and a fake model; normal runs use
+    NXCAT_DATABASE_URL and NXCAT_LLM_MODEL."""
     app = FastAPI(
         title="nxcat",
         version=__version__,
@@ -44,7 +53,9 @@ def create_app(engine: Engine | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.state.engine = engine or make_engine()
+    app.state.complete = complete or _default_completer()
     app.include_router(router)
+    app.include_router(ask.router)
     app.include_router(auth.router)
     app.include_router(admin.router)
     app.add_exception_handler(OperationalError, _database_unavailable)

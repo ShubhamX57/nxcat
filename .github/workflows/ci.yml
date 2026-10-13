@@ -80,6 +80,9 @@ jobs:
       - name: Check write actions are off without login settings (secure default)
         run: |
           test "$(curl --silent -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{"folder":"generated"}' http://localhost:8000/api/v1/ingest)" = "503"
+      - name: Check plain-English search is off without a model (and says so)
+        run: |
+          test "$(curl --silent -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{"question":"LET runs"}' http://localhost:8080/api/v1/search/ask)" = "503"
       - name: Show logs if anything failed
         if: failure()
         run: docker compose logs

@@ -2,10 +2,18 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { getFacets, searchDatasets } from './api/client'
 import type { DatasetPage, Facets, SearchParams } from './api/types'
+import { AskPanel } from './components/AskPanel'
 import { FilterPanel } from './components/FilterPanel'
 import { Pagination } from './components/Pagination'
 import { ResultsTable } from './components/ResultsTable'
-import { EMPTY_FORM, formFromUrl, formToUrl, pageFromUrl, toSearchParams } from './filters'
+import {
+  EMPTY_FORM,
+  formFromFilters,
+  formFromUrl,
+  formToUrl,
+  pageFromUrl,
+  toSearchParams,
+} from './filters'
 
 export const PAGE_SIZE = 20
 
@@ -64,6 +72,7 @@ export function SearchPage() {
 
   return (
     <>
+      <AskPanel onRun={(filter) => setUrl(formToUrl(formFromFilters(filter)))} />
       <FilterPanel
         form={form}
         facets={facets}

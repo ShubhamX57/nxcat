@@ -1,4 +1,4 @@
-import type { SearchParams } from './api/types'
+import type { Filters, SearchParams } from './api/types'
 
 /** What the filter form holds: everything is a string, as typed by the user. */
 export interface FilterForm {
@@ -81,4 +81,28 @@ export function formToUrl(form: FilterForm, page = 1): URLSearchParams {
 export function pageFromUrl(params: URLSearchParams): number {
   const page = Number(params.get('page'))
   return Number.isInteger(page) && page >= 1 ? page : 1
+}
+
+function previousDay(isoDateTime: string): string {
+  const d = new Date(isoDateTime)
+  d.setUTCDate(d.getUTCDate() - 1)
+  return d.toISOString().slice(0, 10)
+}
+
+/**
+ * The opposite of toSearchParams: put an API filter (e.g. one proposed by the
+ * plain-English search) into the form. The API's exclusive "start_before" becomes
+ * the form's inclusive "to" date.
+ */
+export function formFromFilters(filters: Filters): FilterForm {
+  const text = (value: number | string | undefined) => (value === undefined ? '' : String(value))
+  return {
+    q: text(filters.q),
+    instrument: text(filters.instrument),
+    technique: text(filters.technique),
+    tempMin: text(filters.temp_min),
+    tempMax: text(filters.temp_max),
+    dateFrom: filters.start_after ? new Date(filters.start_after).toISOString().slice(0, 10) : '',
+    dateTo: filters.start_before ? previousDay(filters.start_before) : '',
+  }
 }

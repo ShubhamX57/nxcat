@@ -418,3 +418,53 @@ code {
   overflow-y: auto;
   margin-top: 8px;
 }
+
+/* --- plain-English search --- */
+
+.ask {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.ask-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.ask-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ask-row input {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.proposal {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px dashed var(--accent);
+  border-radius: var(--radius);
+}
+
+.proposal-title {
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+.proposal ul {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+
+.proposal .note {
+  margin: 8px 0 0;
+}
