@@ -19,6 +19,19 @@ export function formatNumber(value: number): string {
   return significant.format(value)
 }
 
+/**
+ * A measured value and its uncertainty, rounded together: the error to two
+ * significant figures, and the value to the same decimal place.
+ * (0.210804, 0.00089) -> "0.21080 ± 0.00089"
+ */
+export function formatWithError(value: number, error: number): string {
+  if (!Number.isFinite(error) || error <= 0) {
+    return `${formatNumber(value)} ± ${formatNumber(error)}`
+  }
+  const decimals = Math.min(12, Math.max(0, 1 - Math.floor(Math.log10(error))))
+  return `${value.toFixed(decimals)} ± ${error.toFixed(decimals)}`
+}
+
 export function formatBytes(bytes: number): string {
   const units = ['B', 'KB', 'MB', 'GB', 'TB']
   let value = bytes
