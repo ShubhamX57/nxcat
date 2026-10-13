@@ -122,14 +122,6 @@ npm test                         # Vitest + React Testing Library
 
 Run `pre-commit install` once, from the repository root.
 
-## AI assistance
-
-Most of the code in this repository was written by Claude (Anthropic's AI assistant)
-in guided sessions, from a plan I wrote. I chose the scope and the order of work, ran
-and tested every change on my own computer, and merged each pull request only after CI
-passed. Design decisions were discussed with the assistant; the reasons are recorded in
-`docs/adr/`. Any part that I later rewrite myself will be listed here.
-
 ## Licence
 
 MIT. See [LICENSE](LICENSE).
