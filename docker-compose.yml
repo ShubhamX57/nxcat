@@ -23,6 +23,12 @@ services:
     build: ./backend
     environment:
       NXCAT_DATABASE_URL: postgresql+psycopg://nxcat:nxcat@db:5432/nxcat
+      NXCAT_DATA_ROOT: /data
+    # Login settings for write actions (see .env.example). Optional: without a
+    # .env file the API still starts, read-only.
+    env_file:
+      - path: .env
+        required: false
     ports:
       - "8000:8000"
     volumes:

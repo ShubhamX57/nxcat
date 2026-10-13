@@ -14,6 +14,7 @@ from sqlalchemy import Engine
 from sqlalchemy.exc import OperationalError, SQLAlchemyError
 
 from nxcat import __version__
+from nxcat.api import admin, auth
 from nxcat.api.routes import router
 from nxcat.db import create_tables, make_engine
 
@@ -44,6 +45,8 @@ def create_app(engine: Engine | None = None) -> FastAPI:
     )
     app.state.engine = engine or make_engine()
     app.include_router(router)
+    app.include_router(auth.router)
+    app.include_router(admin.router)
     app.add_exception_handler(OperationalError, _database_unavailable)
     return app
 

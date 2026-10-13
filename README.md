@@ -38,6 +38,22 @@ docker compose exec api nxcat-ingest /data/generated
 Then open the app at <http://localhost:8080>, and the API docs at <http://localhost:8000/api/v1/docs>.
 Stop with `docker compose down` (add `-v` to delete the data too).
 
+## Write actions (admin login)
+
+Reading is open. Changing the catalogue, for now starting an ingest, needs a login
+token. Without login settings nxcat is read-only, and write requests answer 503.
+
+```bash
+cp .env.example .env
+python3 -c "import secrets; print(secrets.token_urlsafe(48))"   # paste as NXCAT_SECRET_KEY
+docker compose run --rm api nxcat-hash-password                  # paste as NXCAT_ADMIN_PASSWORD_HASH
+docker compose up -d --wait
+```
+
+Then, in the API docs at <http://localhost:8000/api/v1/docs>, press **Authorize**,
+log in, and call `POST /api/v1/ingest` with `{"folder": "generated"}`. Only folders
+inside the data root (`/data` in Docker) can be ingested.
+
 ## Development
 
 Requirements: Python 3.12, [uv](https://docs.astral.sh/uv/), Docker.
