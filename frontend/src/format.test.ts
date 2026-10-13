@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { formatBytes, formatDuration, formatNumber, formatTemperature, formatTime } from './format'
+import {
+  formatBytes,
+  formatDuration,
+  formatNumber,
+  formatTemperature,
+  formatTime,
+  formatWithError,
+} from './format'
 
 describe('formatTime', () => {
   it('shows UTC to the minute', () => {
@@ -37,6 +44,18 @@ describe('formatNumber', () => {
     [2e6, '2e+6'],
   ])('%s -> %s', (value, text) => {
     expect(formatNumber(value)).toBe(text)
+  })
+})
+
+describe('formatWithError', () => {
+  it.each([
+    [0.210804, 0.00089, '0.21080 ± 0.00089'],
+    [0.1491, 0.0012, '0.1491 ± 0.0012'],
+    [123.456, 12.3, '123 ± 12'],
+    [5, 0, '5 ± 0'],
+    [5, Number.NaN, '5 ± NaN'],
+  ])('%s, %s -> %s', (value, error, text) => {
+    expect(formatWithError(value, error)).toBe(text)
   })
 })
 

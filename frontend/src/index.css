@@ -286,11 +286,13 @@ a {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  overflow: hidden; /* hides the last row's bottom lines, which may not span the width */
 }
 
 .meta > div {
   padding: 10px 14px;
   border-bottom: 1px solid var(--border);
+  margin-bottom: -1px;
   min-width: 0;
 }
 

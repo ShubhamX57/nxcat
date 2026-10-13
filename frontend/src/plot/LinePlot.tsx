@@ -13,7 +13,7 @@ interface Props {
 // Drawing area in SVG units; the SVG scales to the width of its container.
 const WIDTH = 720
 const HEIGHT = 320
-const M = { top: 16, right: 20, bottom: 48, left: 64 }
+const M = { top: 16, right: 20, bottom: 48, left: 84 } // left: room for ticks and the y label
 
 export function LinePlot({ x, y, xLabel, yLabel, title }: Props) {
   const [hover, setHover] = useState<number | null>(null)
@@ -74,7 +74,7 @@ export function LinePlot({ x, y, xLabel, yLabel, title }: Props) {
         </text>
         <text
           className="axis-label"
-          transform={`translate(16 ${(M.top + HEIGHT - M.bottom) / 2}) rotate(-90)`}
+          transform={`translate(14 ${(M.top + HEIGHT - M.bottom) / 2}) rotate(-90)`}
           textAnchor="middle"
         >
           {yLabel}

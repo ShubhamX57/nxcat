@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { listAnalyses } from '../api/client'
 import type { Analysis } from '../api/types'
-import { formatNumber, formatTime } from '../format'
+import { formatNumber, formatTime, formatWithError } from '../format'
 
 const POLL_MS = 2000
 
@@ -80,7 +80,7 @@ function AnalysisCard({ analysis: a }: { analysis: Analysis }) {
       {r && (
         <>
           <p className="headline">
-            D = {formatNumber(r.diffusion_coefficient)} ± {formatNumber(r.diffusion_coefficient_error)}{' '}
+            D = {formatWithError(r.diffusion_coefficient, r.diffusion_coefficient_error)}{' '}
             Å²/ps
           </p>
           {r.synthetic_truth !== null && (

@@ -6,6 +6,8 @@ A small, open-source metadata catalogue for neutron (NeXus/HDF5) data.
 
 > **Personal portfolio project, not production software. Work in progress.**
 
+![Demo: a plain-English question becomes a checked filter, the user runs it, and opens a dataset with its plot and qens analysis](docs/images/demo.gif)
+
 ## Problem
 
 A neutron facility produces thousands of data files, and scientists need to find them
@@ -22,6 +24,19 @@ catalogue a facility runs, built to learn and show the engineering involved.
 - [x] Plain-English search: the language model only proposes a validated filter, and the user confirms it before it runs (see below)
 - [x] Tests and CI: pytest against a real PostgreSQL, Vitest, ruff, mypy (strict) and oxlint on every pull request, plus an end-to-end check of the whole Docker stack. Backend coverage (lines and branches) was 98.5% on 13 October 2026; CI fails below 80%
 - [x] Integration: run a [qens](https://github.com/ShubhamX57/qens) analysis on a QENS dataset and store the result with provenance ([why qens](docs/adr/0002-integration-qens-analysis-job.md))
+
+## Screenshots
+
+All data shown is synthetic (see [data/SOURCES.md](data/SOURCES.md)).
+
+| Search with filters | Plain-English search: proposal before it runs |
+|---|---|
+| ![Search page filtered to QENS datasets above 200 K](docs/images/search.png) | ![A proposed filter listed in plain words, with Run and Discard buttons](docs/images/plain-english-proposal.png) |
+
+The model replies in these images and the demo are the real replies qwen2.5:7b-instruct gave
+during the evaluation run, replayed from its cache.
+
+![Dataset page with metadata, a quick-look plot and a qens analysis result](docs/images/dataset-page.png)
 
 ## Architecture
 
