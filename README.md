@@ -45,10 +45,16 @@ token. Without login settings nxcat is read-only, and write requests answer 503.
 
 ```bash
 cp .env.example .env
-python3 -c "import secrets; print(secrets.token_urlsafe(48))"   # paste as NXCAT_SECRET_KEY
-docker compose run --rm api nxcat-hash-password                  # paste as NXCAT_ADMIN_PASSWORD_HASH
-docker compose up -d --wait
+KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(48))")
+sed -i '' "s|^NXCAT_SECRET_KEY=.*|NXCAT_SECRET_KEY=$KEY|" .env
+HASH=$(cd backend && uv run nxcat-hash-password)   # asks for a password (12+ characters)
+sed -i '' "s|^NXCAT_ADMIN_PASSWORD_HASH=.*|NXCAT_ADMIN_PASSWORD_HASH='$HASH'|" .env
+docker compose up -d --wait                         # restart so the API reads .env
 ```
+
+These write the secrets straight into `.env` without showing them (on Linux, use
+`sed -i` instead of `sed -i ''`). The hash must stay in single quotes, because it
+contains `$` signs that Docker Compose would otherwise treat as variables.
 
 Then, in the API docs at <http://localhost:8000/api/v1/docs>, press **Authorize**,
 log in, and call `POST /api/v1/ingest` with `{"folder": "generated"}`. Only folders
