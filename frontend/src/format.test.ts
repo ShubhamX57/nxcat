@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatTemperature, formatTime } from './format'
+import { formatBytes, formatDuration, formatNumber, formatTemperature, formatTime } from './format'
 
 describe('formatTime', () => {
   it('shows UTC to the minute', () => {
@@ -23,5 +23,41 @@ describe('formatTemperature', () => {
 
   it('shows a dash when unknown', () => {
     expect(formatTemperature(null)).toBe('—')
+  })
+})
+
+describe('formatNumber', () => {
+  it.each([
+    [0, '0'],
+    [1234.5678, '1,235'],
+    [0.12345, '0.1235'],
+    [-2.5, '-2.5'],
+    [12345678, '1.235e+7'],
+    [0.0001234, '1.234e-4'],
+    [2e6, '2e+6'],
+  ])('%s -> %s', (value, text) => {
+    expect(formatNumber(value)).toBe(text)
+  })
+})
+
+describe('formatBytes', () => {
+  it.each([
+    [512, '512 B'],
+    [16904, '16.5 KB'],
+    [5 * 1024 ** 3, '5.0 GB'],
+  ])('%s -> %s', (bytes, text) => {
+    expect(formatBytes(bytes)).toBe(text)
+  })
+})
+
+describe('formatDuration', () => {
+  it('shows hours and minutes', () => {
+    expect(formatDuration('2025-03-01T10:00:00Z', '2025-03-01T12:15:00Z')).toBe('2 h 15 min')
+    expect(formatDuration('2025-03-01T10:00:00Z', '2025-03-01T10:40:00Z')).toBe('40 min')
+  })
+
+  it('is empty when the end is missing or before the start', () => {
+    expect(formatDuration('2025-03-01T10:00:00Z', null)).toBeNull()
+    expect(formatDuration('2025-03-01T10:00:00Z', '2025-03-01T09:00:00Z')).toBeNull()
   })
 })

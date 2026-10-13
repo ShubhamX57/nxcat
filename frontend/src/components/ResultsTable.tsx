@@ -1,7 +1,9 @@
+import { Link, useLocation } from 'react-router'
 import type { Dataset } from '../api/types'
 import { formatTemperature, formatTime } from '../format'
 
 export function ResultsTable({ items }: { items: Dataset[] }) {
+  const { search } = useLocation()
   return (
     <div className="table-wrap">
       <table>
@@ -22,7 +24,9 @@ export function ResultsTable({ items }: { items: Dataset[] }) {
           {items.map((d) => (
             <tr key={d.id}>
               <td>
-                {d.title}
+                <Link to={`/datasets/${d.id}`} state={{ search }}>
+                  {d.title}
+                </Link>
                 <span className="run">run {d.run_number}</span>
               </td>
               <td>{d.instrument}</td>

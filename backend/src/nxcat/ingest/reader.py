@@ -66,7 +66,7 @@ def _describe(loc: tuple[int | str, ...], msg: str) -> str:
 
 
 def _extract(f: h5py.File) -> dict[str, Any]:
-    entry = _find_entry(f)
+    entry = find_entry(f)
     instrument = _text(entry, "instrument/name", required=True)
     return {
         "title": _text(entry, "title", required=True),
@@ -82,7 +82,7 @@ def _extract(f: h5py.File) -> dict[str, Any]:
     }
 
 
-def _find_entry(f: h5py.File) -> h5py.Group:
+def find_entry(f: h5py.File) -> h5py.Group:
     for name in ENTRY_NAMES:
         if isinstance(f.get(name), h5py.Group):
             return f[name]

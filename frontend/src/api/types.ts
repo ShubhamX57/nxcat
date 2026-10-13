@@ -34,6 +34,16 @@ export interface DatasetPage {
   size: number
 }
 
+export interface Preview {
+  dataset_id: number
+  x: (number | null)[]
+  y: (number | null)[]
+  x_label: string
+  y_label: string
+  original_points: number
+  downsampled: boolean
+}
+
 export interface FacetCount {
   value: string
   count: number

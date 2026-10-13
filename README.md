@@ -15,7 +15,7 @@ sample, temperature, date) rather than by folder and file name. -->
 
 - [x] Ingest NeXus/HDF5 files with metadata validation (bad files are logged and skipped)
 - [x] REST API with search, filters, paging and facets (FastAPI, OpenAPI docs)
-- [ ] Web app (React + TypeScript): search page with filters and paging ✓; dataset page with a quick-look plot (to do)
+- [x] Web app (React + TypeScript): search with filters and paging (filters kept in the address, so searches can be shared); dataset page with full metadata and a quick-look plot
 - [ ] Plain-English search: the language model only proposes a validated filter, and the user confirms it before it runs
 - [ ] Integration: SciCat or qens (see the decision record in `docs/adr`)
 

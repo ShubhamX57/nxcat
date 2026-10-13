@@ -1,7 +1,9 @@
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 
+import h5py
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine
@@ -9,7 +11,9 @@ from sqlalchemy.orm import Session
 
 from nxcat.api.app import create_app
 from nxcat.db import make_engine
+from nxcat.ingest.pipeline import ingest_folder
 from nxcat.models.tables import Dataset
+from nxcat.synthetic import generate
 
 T0 = datetime(2025, 1, 1, tzinfo=UTC)
 
@@ -269,3 +273,62 @@ def test_facets(client: TestClient, catalogue: dict[str, int]) -> None:
 
 def test_facets_on_empty_catalogue(client: TestClient) -> None:
     assert client.get("/api/v1/facets").json() == {"instrument": [], "technique": []}
+
+
+# --- preview ---
+
+
+@pytest.fixture
+def ingested(db: Engine, tmp_path: Path) -> dict[str, int]:
+    """Two real generated files, ingested: one plottable, one with its data removed."""
+    good, bad = generate(tmp_path, n=2, seed=21)
+    with h5py.File(bad, "a") as f:
+        del f["entry/data"]
+    ingest_folder(tmp_path, db)
+    with Session(db) as session:
+        rows = {r.file_path: r.id for r in session.query(Dataset)}
+    return {"good": rows[str(good.resolve())], "bad": rows[str(bad.resolve())]}
+
+
+def test_preview(client: TestClient, ingested: dict[str, int]) -> None:
+    body = client.get(f"/api/v1/datasets/{ingested['good']}/preview").json()
+    assert body["dataset_id"] == ingested["good"]
+    assert body["x_label"] == "energy_transfer (meV)"
+    assert len(body["x"]) == len(body["y"]) == 200
+    assert body["downsampled"] is False
+
+
+def test_preview_max_points(client: TestClient, ingested: dict[str, int]) -> None:
+    body = client.get(
+        f"/api/v1/datasets/{ingested['good']}/preview", params={"max_points": 50}
+    ).json()
+    assert len(body["y"]) == 50
+    assert body["original_points"] == 200
+    assert body["downsampled"] is True
+
+
+@pytest.mark.parametrize("max_points", [0, 9, 2001])
+def test_preview_max_points_limits(
+    client: TestClient, ingested: dict[str, int], max_points: int
+) -> None:
+    response = client.get(
+        f"/api/v1/datasets/{ingested['good']}/preview", params={"max_points": max_points}
+    )
+    assert response.status_code == 422
+
+
+def test_preview_of_unknown_dataset_is_404(client: TestClient) -> None:
+    assert client.get("/api/v1/datasets/999999/preview").status_code == 404
+
+
+def test_preview_of_moved_file_is_404(client: TestClient, db: Engine) -> None:
+    dataset_id = add(db, n=1)  # file_path points nowhere
+    response = client.get(f"/api/v1/datasets/{dataset_id}/preview")
+    assert response.status_code == 404
+    assert "no longer available" in response.json()["detail"]
+
+
+def test_preview_of_unplottable_file_is_422(client: TestClient, ingested: dict[str, int]) -> None:
+    response = client.get(f"/api/v1/datasets/{ingested['bad']}/preview")
+    assert response.status_code == 422
+    assert response.json()["detail"] == "no preview: no NXdata group to plot"

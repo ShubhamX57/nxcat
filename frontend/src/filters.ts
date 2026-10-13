@@ -47,3 +47,38 @@ export function toSearchParams(form: FilterForm): SearchParams {
     start_before: form.dateTo ? `${nextDay(form.dateTo)}T00:00:00Z` : undefined,
   }
 }
+
+// The applied filters live in the page URL (e.g. /?instrument=LET&temp_min=200&page=2),
+// so a search can be bookmarked or shared, and the Back button restores it.
+const URL_KEYS: Record<keyof FilterForm, string> = {
+  q: 'q',
+  instrument: 'instrument',
+  technique: 'technique',
+  tempMin: 'temp_min',
+  tempMax: 'temp_max',
+  dateFrom: 'from',
+  dateTo: 'to',
+}
+
+export function formFromUrl(params: URLSearchParams): FilterForm {
+  const form = { ...EMPTY_FORM }
+  for (const [field, key] of Object.entries(URL_KEYS) as [keyof FilterForm, string][]) {
+    form[field] = params.get(key) ?? ''
+  }
+  return form
+}
+
+export function formToUrl(form: FilterForm, page = 1): URLSearchParams {
+  const params = new URLSearchParams()
+  for (const [field, key] of Object.entries(URL_KEYS) as [keyof FilterForm, string][]) {
+    const value = form[field].trim()
+    if (value) params.set(key, value)
+  }
+  if (page > 1) params.set('page', String(page))
+  return params
+}
+
+export function pageFromUrl(params: URLSearchParams): number {
+  const page = Number(params.get('page'))
+  return Number.isInteger(page) && page >= 1 ? page : 1
+}

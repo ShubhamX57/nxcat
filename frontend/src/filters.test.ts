@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EMPTY_FORM, toSearchParams } from './filters'
+import { EMPTY_FORM, formFromUrl, formToUrl, pageFromUrl, toSearchParams } from './filters'
 
 describe('toSearchParams', () => {
   it('turns an empty form into no filters', () => {
@@ -23,5 +23,29 @@ describe('toSearchParams', () => {
     expect(toSearchParams({ ...EMPTY_FORM, dateTo: '2025-12-31' }).start_before).toBe(
       '2026-01-01T00:00:00Z',
     )
+  })
+})
+
+describe('filters in the address', () => {
+  it('round-trips through the URL, leaving out empty fields', () => {
+    const form = { ...EMPTY_FORM, q: 'benzene', tempMin: '200', dateTo: '2025-02-28' }
+    const url = formToUrl(form, 3)
+    expect(url.toString()).toBe('q=benzene&temp_min=200&to=2025-02-28&page=3')
+    expect(formFromUrl(url)).toEqual(form)
+  })
+
+  it('does not write page 1', () => {
+    expect(formToUrl(EMPTY_FORM, 1).toString()).toBe('')
+  })
+
+  it.each([
+    ['page=4', 4],
+    ['', 1],
+    ['page=0', 1],
+    ['page=-2', 1],
+    ['page=2.5', 1],
+    ['page=abc', 1],
+  ])('reads "%s" as page %s', (query, page) => {
+    expect(pageFromUrl(new URLSearchParams(query))).toBe(page)
   })
 })

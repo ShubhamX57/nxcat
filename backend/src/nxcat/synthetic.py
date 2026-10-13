@@ -137,7 +137,11 @@ def write_nexus(
 
 
 def _write_spectrum(entry: h5py.Group, rng: random.Random) -> None:
-    """A small peak on a flat background: enough for a quick-look plot."""
+    """A small peak on a flat background: enough for a quick-look plot.
+
+    Simplification: every technique gets the same energy-transfer axis, even where
+    a real instrument would use Q or d-spacing.
+    """
     np_rng = np.random.default_rng(rng.randrange(2**32))
     x = np.linspace(-1.0, 1.0, N_POINTS)
     width = np_rng.uniform(0.05, 0.3)
@@ -147,8 +151,9 @@ def _write_spectrum(entry: h5py.Group, rng: random.Random) -> None:
     data = entry.create_group("data")
     data.attrs["NX_class"] = "NXdata"
     data.attrs["signal"] = "counts"
-    data.attrs["axes"] = "x"
-    data["x"] = x.astype(np.float32)
+    data.attrs["axes"] = "energy_transfer"
+    data["energy_transfer"] = x.astype(np.float32)
+    data["energy_transfer"].attrs["units"] = "meV"
     data["counts"] = counts
 
 
