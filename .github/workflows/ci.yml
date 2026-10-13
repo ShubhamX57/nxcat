@@ -77,6 +77,23 @@ jobs:
           curl --fail --silent http://localhost:8080/datasets/1 | grep -q "<title>nxcat</title>"
           test "$(curl --fail --silent 'http://localhost:8080/api/v1/datasets?size=1' | python3 -c 'import json,sys; print(json.load(sys.stdin)["total"])')" = "20"
           curl --fail --silent --head http://localhost:8080/ | grep -qi "content-security-policy"
+      - name: Run a qens analysis inside the API container
+        run: |
+          docker compose exec -T api python - <<'EOF'
+          import h5py, pathlib
+          from nxcat.integrations.qens_job import Settings, run_fickian
+          files = sorted(pathlib.Path("/data/generated").glob("*.nxs"))
+          def is_qens(p):
+              try:
+                  with h5py.File(p) as f:
+                      return f["entry/definition"].asstr()[()] == "NXspe"
+              except OSError:
+                  return False
+          qens_file = next(p for p in files if is_qens(p))
+          r = run_fickian(qens_file, Settings())
+          print(qens_file.name, "D =", r["diffusion_coefficient"], "true", r["synthetic_truth"])
+          assert abs(r["diffusion_coefficient"] - r["synthetic_truth"]) < 0.05 * r["synthetic_truth"]
+          EOF
       - name: Check write actions are off without login settings (secure default)
         run: |
           test "$(curl --silent -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{"folder":"generated"}' http://localhost:8000/api/v1/ingest)" = "503"

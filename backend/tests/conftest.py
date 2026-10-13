@@ -43,7 +43,7 @@ def engine() -> Iterator[Engine]:
 def db(engine: Engine) -> Engine:
     """An empty database for each test."""
     with engine.begin() as conn:
-        conn.execute(text("TRUNCATE dataset, ingest_error RESTART IDENTITY"))
+        conn.execute(text("TRUNCATE dataset, ingest_error, analysis RESTART IDENTITY"))
     return engine
 
 

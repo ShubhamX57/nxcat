@@ -13,6 +13,8 @@ dependencies = [
     "pydantic>=2.14.1",
     "pyjwt>=2.9",
     "python-multipart>=0.0.9",
+    "qens",
+    "scipy>=1.10",
     "sqlalchemy>=2.0",
     "uvicorn[standard]>=0.30",
 ]
@@ -60,7 +62,7 @@ plugins = ["pydantic.mypy"]
 files = ["src", "tests"]
 
 [[tool.mypy.overrides]]
-module = ["h5py", "h5py.*"]
+module = ["h5py", "h5py.*", "scipy", "scipy.*", "qens", "qens.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
@@ -70,3 +72,6 @@ addopts = "-ra --strict-markers"
 [tool.coverage.run]
 source = ["nxcat"]
 branch = true
+
+[tool.uv.sources]
+qens = { git = "https://github.com/ShubhamX57/qens", rev = "a7fddd80093e45deb5e46a22611df258ed153533" }

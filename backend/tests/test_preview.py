@@ -103,7 +103,7 @@ def test_axes_given_as_a_list(tmp_path: Path) -> None:
     [
         ("no_nxdata", "no NXdata group"),
         ("no_signal", "no valid 'signal'"),
-        ("two_d", "only 1-D signals"),
+        ("three_d", "only 1-D and 2-D signals"),
         ("empty", "the signal is empty"),
         ("text", "cannot read plottable data"),
     ],
@@ -116,8 +116,8 @@ def test_unplottable_files_give_a_reason(tmp_path: Path, change: str, reason: st
     elif change == "no_signal":
         with h5py.File(path, "a") as f:
             del f["entry/data"].attrs["signal"]
-    elif change == "two_d":
-        replace_data(path, y=np.ones((3, 3)))
+    elif change == "three_d":
+        replace_data(path, y=np.ones((2, 3, 3)))
     elif change == "empty":
         replace_data(path, y=np.array([], dtype=float))
     else:
@@ -130,3 +130,34 @@ def test_unplottable_files_give_a_reason(tmp_path: Path, change: str, reason: st
 def test_unreadable_files_give_a_reason(tmp_path: Path, kind: Broken) -> None:
     with pytest.raises(ReadError):
         read_preview(make_file(tmp_path, kind))
+
+
+def test_two_d_signal_is_summed_over_detectors(tmp_path: Path) -> None:
+    path = make_file(tmp_path)
+    with h5py.File(path, "a") as f:
+        del f["entry/data"]
+        data = f["entry"].create_group("data")
+        data.attrs["NX_class"] = "NXdata"
+        data.attrs["signal"] = "data"
+        data.attrs["axes"] = np.array([b"polar", b"energy"])
+        data["data"] = np.array([[1.0, 2.0, 3.0], [10.0, 20.0, 30.0]])
+        data["polar"] = np.array([10.0, 20.0])
+        data["energy"] = np.array([-1.0, 0.0, 1.0, 2.0])  # bin edges
+        data["energy"].attrs["units"] = "meV"
+    preview = read_preview(path)
+    assert preview.y == [11.0, 22.0, 33.0]
+    assert preview.x == [-0.5, 0.5, 1.5]
+    assert preview.x_label == "energy (meV)"
+    assert preview.y_label == "data, sum of 2 spectra"
+
+
+def test_generated_qens_file_previews_as_one_spectrum(tmp_path: Path) -> None:
+    rng = random.Random(0)
+    while True:
+        meta = random_metadata(rng, 1)
+        if meta.technique.value == "QENS":
+            break
+    preview = read_preview(write_nexus(tmp_path / "q.nxs", meta, rng))
+    assert preview.x_label == "energy (meV)"
+    assert len(preview.y) == 300
+    assert preview.y_label == "data, sum of 40 spectra"

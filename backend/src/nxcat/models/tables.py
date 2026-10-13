@@ -5,9 +5,10 @@ every file that could not be ingested, and why.
 """
 
 from datetime import datetime
+from typing import Any
 
-from sqlalchemy import BigInteger, Computed, DateTime, Index, String, Text, func
-from sqlalchemy.dialects.postgresql import TSVECTOR
+from sqlalchemy import BigInteger, Computed, DateTime, ForeignKey, Index, String, Text, func
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 # Full-text search over the fields a person is most likely to type.
@@ -61,3 +62,24 @@ class IngestError(Base):
     occurred_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class Analysis(Base):
+    """One analysis run on one dataset, kept with everything needed to judge or
+    repeat it: method, settings, software versions, who started it and when."""
+
+    __tablename__ = "analysis"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    dataset_id: Mapped[int] = mapped_column(
+        ForeignKey("dataset.id", ondelete="CASCADE"), index=True
+    )
+    method: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(16))  # queued, running, done, failed
+    parameters: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    result: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    error: Mapped[str | None] = mapped_column(Text)
+    software: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    requested_by: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

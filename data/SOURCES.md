@@ -12,6 +12,12 @@ uv run nxcat-generate --out ../data/generated -n 200 --seed 42
 uv run nxcat-generate --out ../data/generated -n 0 --with-broken   # bad files for testing
 ```
 
+QENS datasets contain a detector-by-energy S(2θ, ω) in the NXSPE layout, simulated
+for Fickian diffusion (an elastic line plus a quasi-elastic Lorentzian of half-width
+Γ = ħ D Q², broadened by a Gaussian resolution, with Poisson noise). Each file records
+the instrument resolution and the true D (`entry/sample/synthetic_diffusion_coefficient`)
+so analyses can be checked against it.
+
 Generated files go to `data/generated/`, which is git-ignored.
 
 ## Public files

@@ -79,3 +79,38 @@ export type AskResponse =
       reason: string
       description: string[]
     }
+
+export interface QBin {
+  q: number
+  hwhm_mev: number
+  hwhm_error_mev: number
+  eisf: number
+}
+
+export interface FickianResult {
+  model: string
+  diffusion_coefficient: number
+  diffusion_coefficient_error: number
+  units: string
+  reduced_chi_squared: number
+  resolution_fwhm_mev: number
+  resolution_source: string
+  q_bins: QBin[]
+  synthetic_truth: number | null
+  warnings: string[]
+}
+
+/** One qens analysis run, with the settings and software it used. */
+export interface Analysis {
+  id: number
+  dataset_id: number
+  method: string
+  status: 'queued' | 'running' | 'done' | 'failed'
+  parameters: Record<string, number | string | null>
+  result: FickianResult | null
+  error: string | null
+  software: { nxcat?: string; package?: string; version?: string; commit?: string | null; source?: string | null }
+  requested_by: string
+  created_at: string
+  finished_at: string | null
+}

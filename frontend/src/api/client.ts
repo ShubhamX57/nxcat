@@ -1,4 +1,12 @@
-import type { AskResponse, Dataset, DatasetPage, Facets, Preview, SearchParams } from './types'
+import type {
+  Analysis,
+  AskResponse,
+  Dataset,
+  DatasetPage,
+  Facets,
+  Preview,
+  SearchParams,
+} from './types'
 
 const BASE = '/api/v1'
 
@@ -73,4 +81,8 @@ export function askQuestion(question: string, signal?: AbortSignal): Promise<Ask
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ question }),
   })
+}
+
+export function listAnalyses(datasetId: number, signal?: AbortSignal): Promise<Analysis[]> {
+  return getJson<Analysis[]>(`/datasets/${datasetId}/analyses`, signal)
 }

@@ -17,7 +17,7 @@ sample, temperature, date) rather than by folder and file name. -->
 - [x] REST API with search, filters, paging and facets (FastAPI, OpenAPI docs)
 - [x] Web app (React + TypeScript): search with filters and paging (filters kept in the address, so searches can be shared); dataset page with full metadata and a quick-look plot
 - [x] Plain-English search: the language model only proposes a validated filter, and the user confirms it before it runs (see below)
-- [ ] Integration: SciCat or qens (see the decision record in `docs/adr`)
+- [x] Integration: run a [qens](https://github.com/ShubhamX57/qens) analysis on a QENS dataset and store the result with provenance ([why qens](docs/adr/0002-integration-qens-analysis-job.md))
 
 ## Architecture
 
@@ -70,6 +70,29 @@ This writes `docs/ai-evaluation.md` and caches every reply, so the run can be re
 with `--replay-only`.
 
 **Results** (qwen2.5:7b-instruct via Ollama, run 13 October 2026): 16/20 exact filters, 5/5 out-of-scope questions rejected, 0 invalid filters executed; 3/5 ambiguous questions led to a request to clarify. Full table: [docs/ai-evaluation.md](docs/ai-evaluation.md).
+
+## qens analysis
+
+For QENS datasets, nxcat can run [qens](https://github.com/ShubhamX57/qens) to measure
+the self-diffusion coefficient **D**: qens reads the S(2θ, ω) data, fits the
+quasi-elastic width Γ in each Q-bin, and nxcat fits Fickian diffusion,
+Γ = ħ D Q², to those widths. Each run is stored with its settings, the exact qens
+commit, who started it and when, and appears on the dataset page.
+
+Starting a run is a write action (log in first, see below):
+
+```bash
+TOKEN=$(curl -s -d "username=admin&password=YOUR PASSWORD" localhost:8000/api/v1/auth/token | python3 -c "import json,sys;print(json.load(sys.stdin)['access_token'])")
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{}' localhost:8000/api/v1/datasets/ID/analyses
+```
+
+or use **Authorize** and `POST /api/v1/datasets/{id}/analyses` in the API docs.
+The run happens in the background; the dataset page updates when it finishes.
+
+**Accuracy on synthetic data** (where the true D is known): within about 1–2% when
+the instrument resolution is recorded in the file. Without it, the resolution has to
+be estimated from the data's own elastic peak, and D comes out about 15% too high;
+the result then carries a warning saying so.
 
 ## Write actions (admin login)
 
