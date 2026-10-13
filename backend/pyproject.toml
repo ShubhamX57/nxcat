@@ -73,5 +73,9 @@ addopts = "-ra --strict-markers"
 source = ["nxcat"]
 branch = true
 
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+
 [tool.uv.sources]
 qens = { git = "https://github.com/ShubhamX57/qens", rev = "a7fddd80093e45deb5e46a22611df258ed153533" }

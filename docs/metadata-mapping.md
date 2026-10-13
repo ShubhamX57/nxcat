@@ -3,7 +3,9 @@
 How each field in nxcat's `dataset` table is filled. Paths follow the standard
 NeXus `NXentry` layout. ISIS files use `/raw_data_1/` instead of `/entry/`.
 
-> TODO (Shu): check every path against the qens NXSPE reader before ingest is written.
+> QENS files also hold their S(2θ, ω) data in the NXSPE layout that qens reads
+> (`/entry/data/{data, error, energy, polar}` and `/entry/NXSPE_info/fixed_energy`).
+> `test_qens_files_follow_the_nxspe_layout_that_qens_reads` checks this.
 
 ## Fields read from the file
 

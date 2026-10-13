@@ -8,8 +8,11 @@ A small, open-source metadata catalogue for neutron (NeXus/HDF5) data.
 
 ## Problem
 
-<!-- Scientists need to find experiment files by their metadata (instrument,
-sample, temperature, date) rather than by folder and file name. -->
+A neutron facility produces thousands of data files, and scientists need to find them
+by what was measured (instrument, sample, temperature, date) rather than by folder and
+file name. nxcat reads the metadata inside NeXus/HDF5 files, checks it, and makes it
+searchable through an API and a web app. It is a small model of the kind of data
+catalogue a facility runs, built to learn and show the engineering involved.
 
 ## Features
 
@@ -17,11 +20,21 @@ sample, temperature, date) rather than by folder and file name. -->
 - [x] REST API with search, filters, paging and facets (FastAPI, OpenAPI docs)
 - [x] Web app (React + TypeScript): search with filters and paging (filters kept in the address, so searches can be shared); dataset page with full metadata and a quick-look plot
 - [x] Plain-English search: the language model only proposes a validated filter, and the user confirms it before it runs (see below)
+- [x] Tests and CI: pytest against a real PostgreSQL, Vitest, ruff, mypy (strict) and oxlint on every pull request, plus an end-to-end check of the whole Docker stack. Backend coverage (lines and branches) was 98.5% on 13 October 2026; CI fails below 80%
 - [x] Integration: run a [qens](https://github.com/ShubhamX57/qens) analysis on a QENS dataset and store the result with provenance ([why qens](docs/adr/0002-integration-qens-analysis-job.md))
 
 ## Architecture
 
-<!-- Diagram, and a link to docs/architecture.md -->
+```mermaid
+flowchart LR
+    files[("NeXus files")] --> ingest["nxcat-ingest"] --> db[("PostgreSQL")]
+    web["Web app<br/>React + TypeScript"] --> api["API<br/>FastAPI /api/v1"] --> db
+    api -. "proposes a filter only" .-> llm["Language model<br/>(optional)"]
+    api -. "background job" .-> qens["qens analysis"]
+```
+
+Details, request flows and the reasons behind them: [docs/architecture.md](docs/architecture.md).
+Design decisions: [docs/adr/](docs/adr/README.md).
 
 ## Quick start
 
@@ -144,6 +157,32 @@ npm test                         # Vitest + React Testing Library
 ```
 
 Run `pre-commit install` once, from the repository root.
+
+## Limitations
+
+nxcat is a personal portfolio project, not production software. In particular:
+
+- **Synthetic data.** It is tested on generated files and has not been run against a
+  facility's real archive. Real NeXus files vary more than the generator does.
+- **One admin user.** Login is a single account set in `.env`, with short-lived tokens
+  and no way to revoke one early. There are no user accounts, groups or embargo rules,
+  which a real catalogue needs.
+- **No migrations.** Tables are created at start-up. A schema change on a database
+  that already holds data would need a migration tool such as Alembic.
+- **Simple background jobs.** Analyses run inside the API process. If the API restarts
+  during a run, that run stays `running`. A real service would use a job queue.
+- **Search.** PostgreSQL full-text search with English stemming: no typo tolerance and
+  no relevance tuning ([why](docs/adr/0003-postgresql-full-text-search.md)).
+- **Plain-English search** depends on the model. With qwen2.5:7b it got 16 of 20 normal
+  questions exactly right; the other answers are visible to the user before anything
+  runs, but they are still wrong.
+- **qens analysis** fits only a simple Fickian model, and its error bar on D counts
+  only counting noise, so it is too small (the reduced χ² is well above 1).
+- **Quick-look plot** sums 2-D data over detectors. It is a preview, not an analysis.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Licence
 
