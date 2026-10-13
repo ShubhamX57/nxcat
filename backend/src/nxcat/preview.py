@@ -39,8 +39,15 @@ def read_preview(path: Path, max_points: int = DEFAULT_MAX_POINTS) -> Preview:
                 raise ReadError("the NXdata group has no valid 'signal' attribute")
             signal = data[signal_name]
             y = np.asarray(signal[()], dtype=float)
-            x_name, x = _axis(data, len(y) if y.ndim == 1 else -1)
             y_label = _label(signal_name, signal)
+            if y.ndim == 2:
+                # e.g. NXSPE: one spectrum per detector. The quick look is their sum.
+                n_spectra = y.shape[0]
+                y = np.nansum(y, axis=0)
+                y_label = f"{y_label}, sum of {n_spectra} spectra"
+                x_name, x = _axis(data, len(y), last=True)
+            else:
+                x_name, x = _axis(data, len(y) if y.ndim == 1 else -1)
             x_label = _label(x_name, data[x_name]) if x_name else "index"
     except ReadError:
         raise
@@ -48,7 +55,7 @@ def read_preview(path: Path, max_points: int = DEFAULT_MAX_POINTS) -> Preview:
         raise ReadError(f"cannot read plottable data ({exc.__class__.__name__})") from exc
 
     if y.ndim != 1:
-        raise ReadError(f"only 1-D signals can be previewed (this one is {y.ndim}-D)")
+        raise ReadError(f"only 1-D and 2-D signals can be previewed (this one is {y.ndim}-D)")
     if len(y) == 0:
         raise ReadError("the signal is empty")
 
@@ -72,11 +79,14 @@ def _find_nxdata(entry: h5py.Group) -> h5py.Group:
     raise ReadError("no NXdata group to plot")
 
 
-def _axis(data: h5py.Group, length: int) -> tuple[str | None, npt.NDArray[np.float64]]:
-    """The x axis named by `axes`, or 0, 1, 2, ... if there is no usable one."""
+def _axis(
+    data: h5py.Group, length: int, *, last: bool = False
+) -> tuple[str | None, npt.NDArray[np.float64]]:
+    """The x axis named by `axes` (its first entry, or its last when `last` is set),
+    or 0, 1, 2, ... if there is no usable one."""
     axes = data.attrs.get("axes")
     if isinstance(axes, np.ndarray | list) and len(axes) > 0:
-        axes = axes[0]
+        axes = axes[-1] if last else axes[0]
     name = axes.decode() if isinstance(axes, bytes) else axes
     if isinstance(name, str) and isinstance(data.get(name), h5py.Dataset):
         values = np.asarray(data[name][()], dtype=float)

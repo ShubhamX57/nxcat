@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router'
 import { ApiError, getDataset, getPreview } from './api/client'
 import type { Dataset, Preview } from './api/types'
 import { formatBytes, formatDuration, formatTemperature, formatTime } from './format'
+import { AnalysesSection } from './components/AnalysesSection'
 import { LinePlot } from './plot/LinePlot'
 
 type Load<T> = { id: number } & ({ state: 'done'; data: T } | { state: 'error'; error: unknown })
@@ -119,6 +120,8 @@ export function DatasetPage() {
           </Row>
         </dl>
       </section>
+
+      {d.technique === 'QENS' && <AnalysesSection datasetId={d.id} />}
     </article>
   )
 }

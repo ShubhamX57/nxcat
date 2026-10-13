@@ -15,7 +15,7 @@ from sqlalchemy.exc import OperationalError, SQLAlchemyError
 
 from nxcat import __version__, config
 from nxcat.ai.proposer import Complete, litellm_completer
-from nxcat.api import admin, ask, auth
+from nxcat.api import admin, analyses, ask, auth
 from nxcat.api.routes import router
 from nxcat.db import create_tables, make_engine
 
@@ -58,6 +58,7 @@ def create_app(engine: Engine | None = None, complete: Complete | None = None) -
     app.include_router(ask.router)
     app.include_router(auth.router)
     app.include_router(admin.router)
+    app.include_router(analyses.router)
     app.add_exception_handler(OperationalError, _database_unavailable)
     return app
 

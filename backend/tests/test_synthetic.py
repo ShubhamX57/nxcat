@@ -44,7 +44,8 @@ def test_same_seed_gives_same_files(tmp_path: Path) -> None:
     for a, b in zip(first, second, strict=True):
         with h5py.File(a) as fa, h5py.File(b) as fb:
             assert read_text(fa, "entry/title") == read_text(fb, "entry/title")
-            assert (fa["entry/data/counts"][()] == fb["entry/data/counts"][()]).all()
+            signal = fa["entry/data"].attrs["signal"]  # "counts", or "data" for QENS
+            assert (fa["entry/data"][signal][()] == fb["entry/data"][signal][()]).all()
 
 
 def test_different_seeds_give_different_files(tmp_path: Path) -> None:
@@ -72,7 +73,7 @@ def test_generate_writes_n_files_with_unique_names(tmp_path: Path) -> None:
     paths = generate(tmp_path, n=20)
     assert len(paths) == 20
     assert len({p.name for p in paths}) == 20
-    assert all(p.stat().st_size < 50_000 for p in paths)
+    assert all(p.stat().st_size < 150_000 for p in paths)  # QENS files are the largest
 
 
 def test_generate_adds_one_file_per_broken_kind(tmp_path: Path) -> None:
@@ -118,3 +119,34 @@ def test_cli_writes_files(tmp_path: Path, capsys: pytest.CaptureFixture[str]) ->
 def test_cli_rejects_negative_n(tmp_path: Path) -> None:
     with pytest.raises(SystemExit):
         main(["--out", str(tmp_path), "-n", "-1"])
+
+
+def test_qens_files_follow_the_nxspe_layout_that_qens_reads(tmp_path: Path) -> None:
+    import qens
+
+    rng = random.Random(0)
+    while True:
+        meta = random_metadata(rng, 1)
+        if meta.technique.value == "QENS":
+            break
+    path = write_nexus(tmp_path / "q.nxs", meta, rng)
+    d = qens.read_nxspe_with_overrides(str(path))
+    assert d["data"].shape == (40, 300)
+    assert d["ei"] == pytest.approx(3.6)
+    assert len(d["good"]) == 40
+    with h5py.File(path) as f:
+        assert f["entry/instrument/energy_resolution"].attrs["units"] == "meV"
+        assert 0.05 <= f["entry/sample/synthetic_diffusion_coefficient"][()] <= 0.25
+
+
+def test_qens_spectra_broaden_with_q() -> None:
+    import numpy as np
+
+    from nxcat.synthetic import QENS_ENERGY_EDGES, qens_spectra
+
+    counts, errors, q = qens_spectra(0.2, np.random.default_rng(0), peak_counts=1e6)
+    omega = (QENS_ENERGY_EDGES[:-1] + QENS_ENERGY_EDGES[1:]) / 2
+    wings = counts[:, np.abs(omega) > 0.2].sum(axis=1) / counts.sum(axis=1)
+    assert q[0] < q[-1]
+    assert wings[-1] > 2 * wings[0]  # higher Q: broader line, more intensity in the wings
+    assert (errors > 0).all()
