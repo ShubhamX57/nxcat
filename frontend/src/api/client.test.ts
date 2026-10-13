@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { ApiError, getFacets, searchDatasets, toQuery } from './client'
+import { ApiError, getDataset, getFacets, getPreview, searchDatasets, toQuery } from './client'
 
 function respond(status: number, body: unknown) {
   return vi.fn().mockResolvedValue(
@@ -68,5 +68,18 @@ describe('getFacets', () => {
   it('passes a string detail through', async () => {
     vi.stubGlobal('fetch', respond(404, { detail: 'not found' }))
     await expect(getFacets()).rejects.toThrow('not found')
+  })
+})
+
+describe('dataset and preview', () => {
+  it('call the detail and preview endpoints', async () => {
+    const fetch = vi.fn(async () => new Response('{}')) // a fresh response for each call
+    vi.stubGlobal('fetch', fetch)
+    await getDataset(5)
+    await getPreview(5)
+    expect(fetch.mock.calls.map((c: unknown[]) => c[0])).toEqual([
+      '/api/v1/datasets/5',
+      '/api/v1/datasets/5/preview',
+    ])
   })
 })

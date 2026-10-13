@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { getFacets, searchDatasets } from './api/client'
 import type { DatasetPage, Facets, SearchParams } from './api/types'
 import { FilterPanel } from './components/FilterPanel'
 import { Pagination } from './components/Pagination'
 import { ResultsTable } from './components/ResultsTable'
-import { EMPTY_FORM, toSearchParams } from './filters'
+import { EMPTY_FORM, formFromUrl, formToUrl, pageFromUrl, toSearchParams } from './filters'
 
 export const PAGE_SIZE = 20
 
@@ -14,9 +15,22 @@ type Result = { key: string } & (
 )
 
 export function SearchPage() {
-  const [form, setForm] = useState(EMPTY_FORM)
-  const [params, setParams] = useState<SearchParams>({})
-  const [page, setPage] = useState(1)
+  // The URL is the single source of truth for the applied filters and the page.
+  const [url, setUrl] = useSearchParams()
+  const applied = formFromUrl(url)
+  const page = pageFromUrl(url)
+  const appliedKey = formToUrl(applied).toString()
+
+  // The form holds what the user is typing, which may differ from what is applied.
+  // When the applied filters change from outside (Back button, a shared link), the
+  // form is reset to match them. This is React's "adjust state during render" pattern.
+  const [form, setForm] = useState(applied)
+  const [formSource, setFormSource] = useState(appliedKey)
+  if (formSource !== appliedKey) {
+    setFormSource(appliedKey)
+    setForm(applied)
+  }
+
   const [result, setResult] = useState<Result | null>(null)
   const [facets, setFacets] = useState<Facets | null>(null)
 
@@ -31,7 +45,7 @@ export function SearchPage() {
 
   // Search again whenever the applied filters or the page change. Aborting the
   // previous request means a slow old response can never overwrite a newer one.
-  const request: SearchParams = { ...params, page, size: PAGE_SIZE }
+  const request: SearchParams = { ...toSearchParams(applied), page, size: PAGE_SIZE }
   const key = JSON.stringify(request)
   useEffect(() => {
     const controller = new AbortController()
@@ -48,25 +62,17 @@ export function SearchPage() {
   // A result for an older request means the new one is still loading.
   const current = result?.key === key ? result : null
 
-  function apply() {
-    setParams(toSearchParams(form))
-    setPage(1)
-  }
-
-  function reset() {
-    setForm(EMPTY_FORM)
-    setParams({})
-    setPage(1)
-  }
-
   return (
     <>
       <FilterPanel
         form={form}
         facets={facets}
         onChange={setForm}
-        onSubmit={apply}
-        onReset={reset}
+        onSubmit={() => setUrl(formToUrl(form))}
+        onReset={() => {
+          setForm(EMPTY_FORM)
+          setUrl(new URLSearchParams())
+        }}
       />
       <section className="results" aria-live="polite" aria-busy={current === null}>
         {current === null && <p className="status">Loading…</p>}
@@ -90,7 +96,7 @@ export function SearchPage() {
               page={current.data.page}
               size={current.data.size}
               total={current.data.total}
-              onPage={setPage}
+              onPage={(next) => setUrl(formToUrl(applied, next))}
             />
           </>
         )}

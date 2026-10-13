@@ -1,68 +1,26 @@
-import { render, screen, within } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Dataset, DatasetPage, Facets } from './api/types'
-import { PAGE_SIZE, SearchPage } from './SearchPage'
-
-const FACETS: Facets = {
-  instrument: [
-    { value: 'LET', count: 2 },
-    { value: 'MARI', count: 1 },
-  ],
-  technique: [
-    { value: 'QENS', count: 2 },
-    { value: 'INS', count: 1 },
-  ],
-}
-
-function dataset(id: number, overrides: Partial<Dataset> = {}): Dataset {
-  return {
-    id,
-    title: `Run ${id}`,
-    instrument: 'LET',
-    technique: 'QENS',
-    run_number: 1000 + id,
-    sample_name: 'water',
-    sample_temperature_k: 300,
-    start_time: '2025-03-01T10:00:00Z',
-    end_time: null,
-    facility: 'ISIS',
-    proposal_id: null,
-    file_path: `/data/${id}.nxs`,
-    file_size_bytes: 1000,
-    checksum: '0'.repeat(64),
-    schema_version: '1',
-    ingested_at: '2025-03-02T00:00:00Z',
-    ...overrides,
-  }
-}
+import type { Dataset, DatasetPage } from './api/types'
+import { PAGE_SIZE } from './SearchPage'
+import { FACETS, calls, dataset, fakeApi as fakeRoutes, json } from './test/fakeApi'
+import { renderAt } from './test/render'
 
 function page(items: Dataset[], total = items.length, pageNumber = 1): DatasetPage {
   return { items, total, page: pageNumber, size: PAGE_SIZE }
 }
 
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
-
-/** A fake API: facets always succeed; search answers with `searchReply(url)`. */
+/** Facets always succeed; search answers with `searchReply(url)`. */
 function fakeApi(searchReply: (url: URL) => Response) {
-  const fetch = vi.fn(async (input: string) => {
-    const url = new URL(input, 'http://test')
-    if (url.pathname === '/api/v1/facets') return json(FACETS)
-    return searchReply(url)
-  })
-  vi.stubGlobal('fetch', fetch)
-  return fetch
+  return fakeRoutes((url) => (url.pathname === '/api/v1/facets' ? json(FACETS) : searchReply(url)))
 }
 
 function searchCalls(fetch: ReturnType<typeof fakeApi>): URL[] {
-  return fetch.mock.calls
-    .map(([input]) => new URL(input, 'http://test'))
-    .filter((url) => url.pathname === '/api/v1/datasets')
+  return calls(fetch, '/api/v1/datasets')
+}
+
+function renderSearch(path = '/') {
+  return renderAt(path)
 }
 
 describe('SearchPage', () => {
@@ -72,7 +30,7 @@ describe('SearchPage', () => {
 
   it('loads and shows datasets', async () => {
     fakeApi(() => json(page([dataset(1, { title: 'Benzene QENS 260 K', sample_temperature_k: 260 })])))
-    render(<SearchPage />)
+    renderSearch()
 
     expect(screen.getByText('Loading…')).toBeInTheDocument()
     const table = await screen.findByRole('table')
@@ -85,7 +43,7 @@ describe('SearchPage', () => {
 
   it('fills the filter menus from the facets, with counts', async () => {
     fakeApi(() => json(page([])))
-    render(<SearchPage />)
+    renderSearch()
     expect(await screen.findByRole('option', { name: 'LET (2)' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'INS (1)' })).toBeInTheDocument()
   })
@@ -93,7 +51,7 @@ describe('SearchPage', () => {
   it('sends the chosen filters when Search is pressed', async () => {
     const user = userEvent.setup()
     const fetch = fakeApi(() => json(page([dataset(1)])))
-    render(<SearchPage />)
+    renderSearch()
     await screen.findByRole('option', { name: 'MARI (1)' })
 
     await user.type(screen.getByRole('searchbox', { name: 'Search' }), 'benzene')
@@ -112,7 +70,7 @@ describe('SearchPage', () => {
 
   it('shows a message when nothing matches', async () => {
     fakeApi(() => json(page([])))
-    render(<SearchPage />)
+    renderSearch()
     expect(await screen.findByText('No datasets match these filters.')).toBeInTheDocument()
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
   })
@@ -124,7 +82,7 @@ describe('SearchPage', () => {
         ? json({ detail: [{ msg: 'Value error, temp_min must not be greater than temp_max' }] }, 422)
         : json(page([dataset(1)])),
     )
-    render(<SearchPage />)
+    renderSearch()
     await screen.findByRole('table')
 
     await user.type(screen.getByRole('spinbutton', { name: 'Minimum temperature (K)' }), '300')
@@ -143,7 +101,7 @@ describe('SearchPage', () => {
         input.endsWith('/facets') ? json(FACETS) : Promise.reject(new TypeError('Failed to fetch')),
       ),
     )
-    render(<SearchPage />)
+    renderSearch()
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to fetch')
   })
 
@@ -153,7 +111,7 @@ describe('SearchPage', () => {
       const n = Number(url.searchParams.get('page') ?? 1)
       return json(page([dataset(n)], 45, n))
     })
-    render(<SearchPage />)
+    renderSearch()
     expect(await screen.findByText('Page 1 of 3')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled()
 
@@ -170,7 +128,7 @@ describe('SearchPage', () => {
   it('Reset clears the filters and searches again', async () => {
     const user = userEvent.setup()
     const fetch = fakeApi(() => json(page([dataset(1)])))
-    render(<SearchPage />)
+    renderSearch()
     await screen.findByRole('table')
 
     const search = screen.getByRole('searchbox', { name: 'Search' })
@@ -190,8 +148,63 @@ describe('SearchPage', () => {
         input.endsWith('/facets') ? json({ detail: 'down' }, 503) : json(page([dataset(1)])),
       ),
     )
-    render(<SearchPage />)
+    renderSearch()
     expect(await screen.findByRole('table')).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Instrument' })).toHaveTextContent('Any')
+  })
+
+  it('reads the filters and page from the address', async () => {
+    const fetch = fakeApi(() => json(page([dataset(1)], 45, 2)))
+    renderSearch('/?q=benzene&instrument=LET&temp_min=200&page=2')
+
+    expect(await screen.findByText('Page 2 of 3')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Search' })).toHaveValue('benzene')
+    const sent = searchCalls(fetch).at(-1)!.searchParams
+    expect(sent.get('q')).toBe('benzene')
+    expect(sent.get('instrument')).toBe('LET')
+    expect(sent.get('temp_min')).toBe('200')
+    expect(sent.get('page')).toBe('2')
+  })
+
+  it('puts applied filters and the page in the address', async () => {
+    const user = userEvent.setup()
+    fakeApi((url) => {
+      const n = Number(url.searchParams.get('page') ?? 1)
+      return json(page([dataset(n)], 45, n))
+    })
+    renderSearch()
+    await screen.findByRole('table')
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search' }), 'water')
+    await user.click(screen.getByRole('button', { name: 'Search' }))
+    expect(screen.getByTestId('address')).toHaveTextContent('/?q=water')
+
+    await user.click(await screen.findByRole('button', { name: 'Next' }))
+    expect(screen.getByTestId('address')).toHaveTextContent('/?q=water&page=2')
+  })
+
+  it('a new search starts again at page 1', async () => {
+    const user = userEvent.setup()
+    fakeApi((url) => json(page([dataset(1)], 45, Number(url.searchParams.get('page') ?? 1))))
+    renderSearch('/?page=3')
+    await screen.findByText('Page 3 of 3')
+
+    await user.click(screen.getByRole('button', { name: 'Search' }))
+    expect(await screen.findByText('Page 1 of 3')).toBeInTheDocument()
+    expect(screen.getByTestId('address')).toHaveTextContent(/^\/$/)
+  })
+
+  it('ignores a nonsense page number in the address', async () => {
+    const fetch = fakeApi(() => json(page([dataset(1)])))
+    renderSearch('/?page=banana')
+    await screen.findByRole('table')
+    expect(searchCalls(fetch).at(-1)!.searchParams.get('page')).toBe('1')
+  })
+
+  it('links each title to its dataset page', async () => {
+    fakeApi(() => json(page([dataset(7, { title: 'Benzene QENS 260 K' })])))
+    renderSearch()
+    const link = await screen.findByRole('link', { name: 'Benzene QENS 260 K' })
+    expect(link).toHaveAttribute('href', '/datasets/7')
   })
 })

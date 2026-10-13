@@ -1,4 +1,4 @@
-import type { DatasetPage, Facets, SearchParams } from './types'
+import type { Dataset, DatasetPage, Facets, Preview, SearchParams } from './types'
 
 const BASE = '/api/v1'
 
@@ -56,4 +56,12 @@ export function searchDatasets(params: SearchParams, signal?: AbortSignal): Prom
 
 export function getFacets(signal?: AbortSignal): Promise<Facets> {
   return getJson<Facets>('/facets', signal)
+}
+
+export function getDataset(id: number, signal?: AbortSignal): Promise<Dataset> {
+  return getJson<Dataset>(`/datasets/${id}`, signal)
+}
+
+export function getPreview(id: number, signal?: AbortSignal): Promise<Preview> {
+  return getJson<Preview>(`/datasets/${id}/preview`, signal)
 }

@@ -87,6 +87,18 @@ class Facets(BaseModel):
     technique: list[FacetCount]
 
 
+class PreviewOut(BaseModel):
+    """Quick-look data for a plot. A null value is a gap (the file held NaN or infinity)."""
+
+    dataset_id: int
+    x: list[float | None]
+    y: list[float | None]
+    x_label: str
+    y_label: str
+    original_points: int
+    downsampled: bool
+
+
 class Health(BaseModel):
     status: str
     database: str
