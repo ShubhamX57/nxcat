@@ -39,3 +39,17 @@ def admin_password_hash() -> str | None:
 
 def token_minutes() -> int:
     return int(os.environ.get("NXCAT_TOKEN_MINUTES", "30"))
+
+
+def llm_model() -> str | None:
+    """LiteLLM model name, e.g. "ollama/qwen2.5:7b-instruct". None switches /search/ask off."""
+    return os.environ.get("NXCAT_LLM_MODEL") or None
+
+
+def llm_api_base() -> str | None:
+    """Where the model server is, e.g. http://host.docker.internal:11434 for Ollama on a Mac."""
+    return os.environ.get("NXCAT_LLM_API_BASE") or None
+
+
+def llm_timeout() -> float:
+    return float(os.environ.get("NXCAT_LLM_TIMEOUT", "30"))

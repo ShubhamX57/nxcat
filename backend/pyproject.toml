@@ -7,6 +7,7 @@ license = "MIT"
 dependencies = [
     "fastapi>=0.115",
     "h5py>=3.16.0",
+    "litellm>=1.50",
     "numpy>=2.5.4",
     "psycopg[binary]>=3.2",
     "pydantic>=2.14.1",
@@ -20,6 +21,7 @@ dependencies = [
 nxcat-generate = "nxcat.synthetic:main"
 nxcat-ingest = "nxcat.ingest.pipeline:main"
 nxcat-hash-password = "nxcat.security:main"
+nxcat-eval = "nxcat.ai.evaluate:main"
 
 [dependency-groups]
 dev = [

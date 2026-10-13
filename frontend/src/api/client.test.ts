@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
-import { ApiError, getDataset, getFacets, getPreview, searchDatasets, toQuery } from './client'
+import {
+  ApiError,
+  askQuestion,
+  getDataset,
+  getFacets,
+  getPreview,
+  searchDatasets,
+  toQuery,
+} from './client'
 
 function respond(status: number, body: unknown) {
   return vi.fn().mockResolvedValue(
@@ -81,5 +89,18 @@ describe('dataset and preview', () => {
       '/api/v1/datasets/5',
       '/api/v1/datasets/5/preview',
     ])
+  })
+})
+
+describe('askQuestion', () => {
+  it('posts the question as JSON', async () => {
+    const fetch = respond(200, { status: 'rejected', kind: 'unclear', reason: 'r', description: [] })
+    vi.stubGlobal('fetch', fetch)
+    await askQuestion('cold runs')
+    const [url, init] = fetch.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/v1/search/ask')
+    expect(init.method).toBe('POST')
+    expect(init.body).toBe(JSON.stringify({ question: 'cold runs' }))
+    expect((init.headers as Record<string, string>)['Content-Type']).toBe('application/json')
   })
 })
