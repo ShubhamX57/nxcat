@@ -10,6 +10,8 @@ dependencies = [
     "numpy>=2.5.4",
     "psycopg[binary]>=3.2",
     "pydantic>=2.14.1",
+    "pyjwt>=2.9",
+    "python-multipart>=0.0.9",
     "sqlalchemy>=2.0",
     "uvicorn[standard]>=0.30",
 ]
@@ -17,6 +19,7 @@ dependencies = [
 [project.scripts]
 nxcat-generate = "nxcat.synthetic:main"
 nxcat-ingest = "nxcat.ingest.pipeline:main"
+nxcat-hash-password = "nxcat.security:main"
 
 [dependency-groups]
 dev = [
@@ -45,7 +48,7 @@ select = ["E", "W", "F", "I", "B", "UP", "N", "S", "SIM", "RUF"]
 known-first-party = ["nxcat"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S311"]  # assert and seeded random are fine in tests
+"tests/**" = ["S101", "S105", "S106", "S311"]  # assert, fake passwords and seeded random are fine in tests
 "src/nxcat/synthetic.py" = ["S311"]  # seeded random on purpose: reproducible fake data, not secrets
 
 [tool.mypy]
