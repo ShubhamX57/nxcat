@@ -12,7 +12,7 @@ from typing import Any, Literal, Self
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Response, status
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from sqlalchemy import Engine, select
+from sqlalchemy import CursorResult, Engine, select, update
 from sqlalchemy.orm import Session
 
 from nxcat import __version__
@@ -66,6 +66,27 @@ class AnalysisOut(BaseModel):
     requested_by: str
     created_at: datetime
     finished_at: datetime | None
+
+
+INTERRUPTED = "the API restarted before this analysis finished; please start it again"
+
+
+def fail_interrupted(engine: Engine) -> int:
+    """Mark analyses that a previous API process left queued or running as failed.
+
+    Background tasks live inside the API process, so after a restart nothing will
+    ever finish them, and the dataset page would wait for ever. Run once at start-up.
+    This is only safe with a single API process, which is how nxcat is deployed.
+    Returns how many analyses were changed.
+    """
+    with Session(engine) as session:
+        result: CursorResult[Any] = session.execute(  # type: ignore[assignment]
+            update(Analysis)
+            .where(Analysis.status.in_(("queued", "running")))
+            .values(status="failed", error=INTERRUPTED, finished_at=datetime.now(UTC))
+        )
+        session.commit()
+        return result.rowcount
 
 
 def run_analysis(analysis_id: int, engine: Engine) -> None:

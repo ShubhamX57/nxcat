@@ -1,6 +1,6 @@
 [project]
 name = "nxcat"
-version = "0.0.1"
+version = "0.1.0"
 description = "A mini metadata catalogue for neutron data"
 requires-python = ">=3.12"
 license = "MIT"

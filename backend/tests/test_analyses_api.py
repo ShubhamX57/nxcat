@@ -151,3 +151,38 @@ def test_an_unexpected_error_is_stored_without_internal_details(
 
 def test_background_task_tolerates_a_vanished_record(db: Engine) -> None:
     analyses.run_analysis(123456, db)  # nothing to do, must not raise
+
+
+def test_restart_fails_analyses_a_previous_run_left_unfinished(
+    db: Engine, ids: dict[str, int]
+) -> None:
+    from nxcat.models.tables import Analysis
+
+    with Session(db) as session:
+        for state in ("queued", "running", "done", "failed"):
+            session.add(
+                Analysis(
+                    dataset_id=ids["qens"],
+                    method="qens-fickian",
+                    status=state,
+                    parameters={},
+                    software={},
+                    requested_by="admin",
+                )
+            )
+        session.commit()
+
+    with TestClient(create_app(engine=db)):  # start-up runs the clean-up
+        pass
+
+    with Session(db) as session:
+        rows = session.scalars(select(Analysis).order_by(Analysis.id)).all()
+        assert [r.status for r in rows] == ["failed", "failed", "done", "failed"]
+        assert rows[0].error == analyses.INTERRUPTED
+        assert rows[1].error == analyses.INTERRUPTED
+        assert rows[0].finished_at is not None
+        assert rows[3].error is None  # an earlier failure keeps its own reason
+
+
+def test_fail_interrupted_reports_how_many_it_changed(db: Engine, ids: dict[str, int]) -> None:
+    assert analyses.fail_interrupted(db) == 0
