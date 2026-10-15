@@ -24,10 +24,14 @@ log = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Create missing tables at start-up. If the database is down, start anyway:
-    /health then reports it, instead of the API refusing to start."""
+    """Create missing tables and close analyses a previous run left unfinished.
+    If the database is down, start anyway: /health then reports it, instead of the
+    API refusing to start."""
     try:
         create_tables(app.state.engine)
+        interrupted = analyses.fail_interrupted(app.state.engine)
+        if interrupted:
+            log.warning("marked %d unfinished analyses as failed after a restart", interrupted)
     except SQLAlchemyError:
         log.warning("database not reachable at start-up; tables not created")
     yield

@@ -62,6 +62,9 @@ flowchart LR
 2. A FastAPI background task runs the qens fit and stores `done` with the result,
    or `failed` with a readable reason. It never crashes the API.
 3. The dataset page polls every 2 seconds while a run is queued or running.
+4. If the API restarts during a run, the background task is lost. At start-up the API
+   marks any analysis still `queued` or `running` as failed, with a reason, so the page
+   never waits for ever.
 
 ## Why it is built this way
 

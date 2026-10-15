@@ -4,7 +4,7 @@
 
 A small, open-source metadata catalogue for neutron (NeXus/HDF5) data.
 
-> **Personal portfolio project, not production software. Work in progress.**
+> **Personal portfolio project, not production software.** Latest release: [v0.1.0](CHANGELOG.md).
 
 ![Demo: a plain-English question becomes a checked filter, the user runs it, and opens a dataset with its plot and qens analysis](docs/images/demo.gif)
 
@@ -185,7 +185,8 @@ nxcat is a personal portfolio project, not production software. In particular:
 - **No migrations.** Tables are created at start-up. A schema change on a database
   that already holds data would need a migration tool such as Alembic.
 - **Simple background jobs.** Analyses run inside the API process. If the API restarts
-  during a run, that run stays `running`. A real service would use a job queue.
+  during a run, the run is marked as failed at start-up and has to be started again.
+  This only works with a single API process; a real service would use a job queue.
 - **Search.** PostgreSQL full-text search with English stemming: no typo tolerance and
   no relevance tuning ([why](docs/adr/0003-postgresql-full-text-search.md)).
 - **Plain-English search** depends on the model. With qwen2.5:7b it got 16 of 20 normal
