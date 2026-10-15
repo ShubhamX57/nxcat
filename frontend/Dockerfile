@@ -1,7 +1,9 @@
 # nxcat web app image. Stage 1 builds the static files with Node; stage 2 serves
 # them with nginx (no Node, no source code, no node_modules in the final image).
 
-FROM node:24-alpine AS build
+# The build output is plain static files, so this stage always runs on the build
+# machine's own platform, even when the image is built for another one.
+FROM --platform=$BUILDPLATFORM node:24-alpine AS build
 WORKDIR /app
 # Dependencies first: this layer is cached until package-lock.json changes.
 COPY package.json package-lock.json ./

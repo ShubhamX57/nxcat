@@ -3,6 +3,13 @@
 All notable changes to nxcat. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- A release workflow that builds the API and web images (amd64 and arm64) and
+  publishes them to GitHub Container Registry for every version tag.
+
 ## [0.1.0] - 2026-10-15
 
 First release.

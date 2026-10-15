@@ -63,6 +63,11 @@ docker compose exec api nxcat-generate --out /data/generated -n 200 --with-broke
 docker compose exec api nxcat-ingest /data/generated
 ```
 
+Pre-built images for each release are published on GitHub Container Registry
+([packages](https://github.com/ShubhamX57?tab=packages&repo_name=nxcat)), for example
+`docker pull ghcr.io/shubhamx57/nxcat-api:0.1.0`. The compose file above builds from
+source, so you do not need them to run nxcat.
+
 Then open the app at <http://localhost:8080>, and the API docs at <http://localhost:8000/api/v1/docs>.
 Stop with `docker compose down` (add `-v` to delete the data too).
 
